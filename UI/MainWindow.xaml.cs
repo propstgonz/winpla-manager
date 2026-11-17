@@ -48,14 +48,19 @@ public class MainWindow : Window
         AutostartBox = N<CheckBox>("AutostartBox"); AutoPlaceBox = N<CheckBox>("AutoPlaceBox");
         ApplyButton = N<Button>("ApplyButton");
         N<Button>("AddButton").Click += Add_Click;
-        AutostartBox.Click += Autostart_Click;
-        AutoPlaceBox.Click += AutoPlace_Click;
         ApplyButton.Click += Apply_Click;
         // Los botones de cada fila viven en un DataTemplate: un solo manejador enrutado, según su Tag.
         RulesList.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(Row_Click));
         _config = ConfigStore.Load();
         try { AutostartBox.IsChecked = Autostart.IsEnabled; } catch (Exception ex) { Log.Write("Autostart: " + ex); }
         AutoPlaceBox.IsChecked = _config.AutoPlacementEnabled;
+        // Las casillas escuchan Checked/Unchecked y no Click: así también responden al teclado y a las
+        // tecnologías de asistencia (UI Automation cambia el estado sin generar Click). Cada manejador
+        // compara con el estado guardado, de modo que los cambios hechos por código no hacen nada.
+        AutostartBox.Checked += Autostart_Click; AutostartBox.Unchecked += Autostart_Click;
+        AutoPlaceBox.Checked += AutoPlace_Click; AutoPlaceBox.Unchecked += AutoPlace_Click;
+        RulesList.AddHandler(ToggleButton.CheckedEvent, new RoutedEventHandler(Row_Toggled));
+        RulesList.AddHandler(ToggleButton.UncheckedEvent, new RoutedEventHandler(Row_Toggled));
         RefreshAll();
         SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
         Closed += (_, _) => SystemEvents.DisplaySettingsChanged -= OnDisplayChanged;
@@ -126,7 +131,15 @@ public class MainWindow : Window
         if (e.OriginalSource is not FrameworkElement { Tag: string tag } el || el.DataContext is not RuleRow) return;
         if (tag == "edit") Edit_Click(el, e);
         else if (tag == "delete") Delete_Click(el, e);
-        else if (tag == "enabled") Enabled_Click(el, e);
+    }
+
+    void Row_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not CheckBox { DataContext: RuleRow row } box) return;
+        bool on = box.IsChecked == true;
+        if (row.Rule.Enabled == on) return;   // cambio hecho por el binding al cargar la fila
+        row.Rule.Enabled = on;
+        Save();
     }
 
     void Edit_Click(object sender, RoutedEventArgs e)
@@ -149,16 +162,10 @@ public class MainWindow : Window
         RefreshAll();
     }
 
-    void Enabled_Click(object sender, RoutedEventArgs e)
-    {
-        RuleOf(sender).Enabled = ((CheckBox)sender).IsChecked == true;
-        Save();
-    }
-
     void Autostart_Click(object sender, RoutedEventArgs e)
     {
         bool on = AutostartBox.IsChecked == true;
-        try { Autostart.Set(on); }
+        try { if (Autostart.IsEnabled != on) Autostart.Set(on); }
         catch (Exception ex)
         {
             AutostartBox.IsChecked = !on;
@@ -168,7 +175,9 @@ public class MainWindow : Window
 
     void AutoPlace_Click(object sender, RoutedEventArgs e)
     {
-        _config.AutoPlacementEnabled = AutoPlaceBox.IsChecked == true;
+        bool on = AutoPlaceBox.IsChecked == true;
+        if (_config.AutoPlacementEnabled == on) return;
+        _config.AutoPlacementEnabled = on;
         Save();
     }
 
