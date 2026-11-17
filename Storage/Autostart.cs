@@ -8,10 +8,10 @@ public static class Autostart
     const string ApprovedKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
     const string Name = "WinPla";
 
-    /// <summary>Línea de comando de la clave Run. WinPla.ps1 la sustituye (bajo pwsh, ProcessPath sería pwsh.exe).</summary>
+    /// <summary>Command line for the Run key. WinPla.ps1 replaces it (under pwsh, ProcessPath would be pwsh.exe).</summary>
     public static string Command { get; set; } = $"\"{Environment.ProcessPath}\" --startup";
 
-    /// <summary>La clave Run del usuario contiene una entrada de WinPla y el usuario no la ha desactivado.</summary>
+    /// <summary>The user's Run key contains a WinPla entry and the user hasn't disabled it.</summary>
     public static bool IsEnabled
     {
         get
@@ -23,7 +23,7 @@ public static class Autostart
         }
     }
 
-    /// <summary>Crea o elimina la entrada HKCU\...\Run: "ruta\WinPla.exe" --startup.</summary>
+    /// <summary>Creates or removes the HKCU\...\Run entry: "path\WinPla.exe" --startup.</summary>
     public static void Set(bool enabled)
     {
         if (enabled)
@@ -39,7 +39,7 @@ public static class Autostart
         }
     }
 
-    /// <summary>Si la entrada existe y no apunta al exe actual (el usuario movió el exe), la reescribe. No la crea. No lanza.</summary>
+    /// <summary>If the entry exists and doesn't point at the current exe (the user moved the exe), rewrites it. Doesn't create it. Doesn't throw.</summary>
     public static void Refresh()
     {
         try
@@ -47,6 +47,6 @@ public static class Autostart
             using var run = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
             if (run?.GetValue(Name) is string s && s != Command) run.SetValue(Name, Command);
         }
-        catch (Exception ex) { Log.Write("Autostart.Refresh falló: " + ex.Message); }
+        catch (Exception ex) { Log.Write("Autostart.Refresh failed: " + ex.Message); }
     }
 }

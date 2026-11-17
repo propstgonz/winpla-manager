@@ -11,27 +11,27 @@ public static class Engine
         public bool Done => Settled >= SettledCycles || Attempts >= MaxAttempts;
     }
 
-    /// <summary>Una pasada sobre las ventanas existentes. Un PlaceResult por ventana casada, o uno con WindowNotFound por regla sin ventanas.</summary>
+    /// <summary>One pass over the existing windows. One PlaceResult per matched window, or one with WindowNotFound per rule with no windows.</summary>
     public static IReadOnlyList<PlaceResult> ApplyOnce(Config config) => Pass(config, null);
 
-    /// <summary>Vigila durante config.WatchSeconds (o hasta cancelación) y coloca cada ventana nueva de las reglas.</summary>
+    /// <summary>Watches for config.WatchSeconds (or until cancelled) and places every new window covered by the rules.</summary>
     public static async Task WatchAsync(Config config, CancellationToken ct)
     {
-        Log.Write($"Vigilancia iniciada ({config.WatchSeconds} s, {config.Rules.Count} reglas)");
+        Log.Write($"Watch started ({config.WatchSeconds} s, {config.Rules.Count} rules)");
         var track = new Dictionary<nint, Track>();
         var end = DateTime.UtcNow.AddSeconds(config.WatchSeconds);
         while (!ct.IsCancellationRequested && DateTime.UtcNow < end)
         {
             try { Pass(config, track); }
-            catch (Exception ex) { Log.Write("Error en ciclo de vigilancia: " + ex); }
-            // ponytail: sondeo cada 1 s; pasar a SetWinEventHook(EVENT_OBJECT_SHOW) si el consumo importa
+            catch (Exception ex) { Log.Write("Error in watch cycle: " + ex); }
+            // ponytail: polls every 1 s; switch to SetWinEventHook(EVENT_OBJECT_SHOW) if the overhead matters
             try { await Task.Delay(1000, ct); }
             catch (OperationCanceledException) { break; }
         }
-        Log.Write("Vigilancia terminada");
+        Log.Write("Watch finished");
     }
 
-    // track == null: pasada única. Con track: estado por HWND (se deja de vigilar al asentarse o agotar intentos).
+    // track == null: single pass. With track: per-HWND state (a window stops being watched once it settles or runs out of attempts).
     static List<PlaceResult> Pass(Config config, Dictionary<nint, Track>? track)
     {
         var monitors = Monitors.GetAll();

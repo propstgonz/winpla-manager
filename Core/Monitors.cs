@@ -5,7 +5,7 @@ namespace WinPla;
 
 public static class Monitors
 {
-    /// <summary>Monitores conectados y activos ahora mismo. Se consulta en cada llamada (sin caché).</summary>
+    /// <summary>Monitors that are connected and active right now. Queried on every call (no cache).</summary>
     public static IReadOnlyList<MonitorInfo> GetAll()
     {
         var list = new List<MonitorInfo>();
@@ -19,8 +19,8 @@ public static class Monitors
             EnumDisplayDevices(mi.szDevice, 0, ref dd, 1 /* EDD_GET_DEVICE_INTERFACE_NAME */);
 
             string id = string.IsNullOrEmpty(dd.DeviceID) ? mi.szDevice : dd.DeviceID;
-            // DeviceID tipo \\?\DISPLAY#GSM5B09#5&...; el 2º trozo es el código de modelo
-            // Preferimos el nombre comercial que muestra Configuración ("LG ULTRAGEAR")
+            // DeviceID like \\?\DISPLAY#GSM5B09#5&...; the 2nd segment is the model code
+            // We prefer the friendly name that Settings shows ("LG ULTRAGEAR")
             if (!friendly.TryGetValue(id, out string? name)) name = dd.DeviceString;
             if (string.IsNullOrWhiteSpace(name) || name.Contains("Generic PnP", StringComparison.OrdinalIgnoreCase))
             {
@@ -36,7 +36,7 @@ public static class Monitors
         return list.OrderBy(m => m.Number).ToList();
     }
 
-    /// <summary>Ruta de interfaz del monitor (= MonitorInfo.Id) → nombre comercial (EDID). Vacío si algo falla.</summary>
+    /// <summary>Monitor interface path (= MonitorInfo.Id) → friendly name (EDID). Empty if anything fails.</summary>
     static Dictionary<string, string> FriendlyNames()
     {
         var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -57,7 +57,7 @@ public static class Monitors
                     names[t.monitorDevicePath] = t.monitorFriendlyDeviceName.Trim();
             }
         }
-        catch { }   // nombre comercial opcional: si falla, se usa el de siempre
+        catch { }   // friendly name is optional: if it fails, the usual name is used
         return names;
     }
 

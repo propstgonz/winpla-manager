@@ -11,12 +11,12 @@
     <StartupObject>WinPla.App</StartupObject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
-    <!-- WPF0001: ThemeMode (tema Fluent nativo) está marcado como experimental -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- WPF0001: ThemeMode (native Fluent theme) is marked as experimental -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
   </PropertyGroup>
 
-  <!-- XAML suelto: se carga en tiempo de ejecución con XamlReader (también bajo WinPla.ps1) -->
+  <!-- Loose XAML: loaded at run time with XamlReader (also under WinPla.ps1) -->
   <ItemGroup>
     <Page Remove="UI\*.xaml" />
     <EmbeddedResource Include="UI\*.xaml" LogicalName="%(Filename)%(Extension)" />

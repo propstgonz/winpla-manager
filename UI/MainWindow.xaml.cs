@@ -8,7 +8,7 @@ using Microsoft.Win32;
 
 namespace WinPla;
 
-/// <summary>Fila de la lista de reglas.</summary>
+/// <summary>Row of the rules list.</summary>
 public sealed class RuleRow
 {
     public required Rule Rule { get; init; }
@@ -21,8 +21,8 @@ public sealed class RuleRow
     public Visibility DisconnectedVisibility => Connected ? Visibility.Collapsed : Visibility.Visible;
     public string ModeText => Rule.Mode switch
     {
-        PlacementMode.Maximized => "Maximizada",
-        PlacementMode.Custom => "Personalizada",
+        PlacementMode.Maximized => "Maximized",
+        PlacementMode.Custom => "Custom",
         _ => "Normal",
     };
 }
@@ -49,14 +49,14 @@ public class MainWindow : Window
         ApplyButton = N<Button>("ApplyButton");
         N<Button>("AddButton").Click += Add_Click;
         ApplyButton.Click += Apply_Click;
-        // Los botones de cada fila viven en un DataTemplate: un solo manejador enrutado, según su Tag.
+        // Each row's buttons live in a DataTemplate: a single routed handler, dispatched by their Tag.
         RulesList.AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(Row_Click));
         _config = ConfigStore.Load();
         try { AutostartBox.IsChecked = Autostart.IsEnabled; } catch (Exception ex) { Log.Write("Autostart: " + ex); }
         AutoPlaceBox.IsChecked = _config.AutoPlacementEnabled;
-        // Las casillas escuchan Checked/Unchecked y no Click: así también responden al teclado y a las
-        // tecnologías de asistencia (UI Automation cambia el estado sin generar Click). Cada manejador
-        // compara con el estado guardado, de modo que los cambios hechos por código no hacen nada.
+        // The checkboxes listen to Checked/Unchecked, not Click: that way they also respond to the keyboard and to
+        // assistive technologies (UI Automation changes the state without raising Click). Each handler
+        // compares against the saved state, so changes made from code do nothing.
         AutostartBox.Checked += Autostart_Click; AutostartBox.Unchecked += Autostart_Click;
         AutoPlaceBox.Checked += AutoPlace_Click; AutoPlaceBox.Unchecked += AutoPlace_Click;
         RulesList.AddHandler(ToggleButton.CheckedEvent, new RoutedEventHandler(Row_Toggled));
@@ -112,7 +112,7 @@ public class MainWindow : Window
     void Save()
     {
         try { ConfigStore.Save(_config); }
-        catch (Exception ex) { Warn("No se pudo guardar la configuración.", ex); }
+        catch (Exception ex) { Warn("Couldn't save the settings.", ex); }
     }
 
     static Rule RuleOf(object sender) => ((RuleRow)((FrameworkElement)sender).DataContext).Rule;
@@ -137,7 +137,7 @@ public class MainWindow : Window
     {
         if (e.OriginalSource is not CheckBox { DataContext: RuleRow row } box) return;
         bool on = box.IsChecked == true;
-        if (row.Rule.Enabled == on) return;   // cambio hecho por el binding al cargar la fila
+        if (row.Rule.Enabled == on) return;   // change made by the binding when the row loads
         row.Rule.Enabled = on;
         Save();
     }
@@ -155,7 +155,7 @@ public class MainWindow : Window
     void Delete_Click(object sender, RoutedEventArgs e)
     {
         var rule = RuleOf(sender);
-        if (MessageBox.Show(this, $"¿Eliminar la regla de {rule.ExeName}?", "WinPla",
+        if (MessageBox.Show(this, $"Remove the rule for {rule.ExeName}?", "WinPla",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         _config.Rules.Remove(rule);
         Save();
@@ -169,7 +169,7 @@ public class MainWindow : Window
         catch (Exception ex)
         {
             AutostartBox.IsChecked = !on;
-            Warn("No se pudo cambiar el inicio con Windows.", ex);
+            Warn("Couldn't change the Start with Windows setting.", ex);
         }
     }
 
@@ -184,7 +184,7 @@ public class MainWindow : Window
     async void Apply_Click(object sender, RoutedEventArgs e)
     {
         ApplyButton.IsEnabled = false;
-        ResultText.Text = "Aplicando…";
+        ResultText.Text = "Applying…";
         try
         {
             var results = await Task.Run(() => Engine.ApplyOnce(_config));
@@ -195,23 +195,23 @@ public class MainWindow : Window
                 string title = string.IsNullOrWhiteSpace(r.Window?.Title) ? "" : $" ({r.Window!.Title})";
                 sb.AppendLine($"{name}{title}: {StatusText(r.Status)}");
             }
-            ResultText.Text = sb.Length == 0 ? "No hay reglas que aplicar." : sb.ToString().TrimEnd();
+            ResultText.Text = sb.Length == 0 ? "No rules to apply." : sb.ToString().TrimEnd();
         }
         catch (Exception ex)
         {
             ResultText.Text = "";
-            Warn("No se pudieron aplicar las reglas.", ex);
+            Warn("Couldn't apply the rules.", ex);
         }
         finally { ApplyButton.IsEnabled = true; }
     }
 
     static string StatusText(PlaceStatus s) => s switch
     {
-        PlaceStatus.Placed => "colocada",
-        PlaceStatus.AlreadyOk => "ya estaba en su sitio",
-        PlaceStatus.WindowNotFound => "no está abierta",
-        PlaceStatus.MonitorDisconnected => "su monitor no está conectado",
-        PlaceStatus.AccessDenied => "se ejecuta como administrador; WinPla no puede moverla",
-        _ => "no se pudo mover",
+        PlaceStatus.Placed => "placed",
+        PlaceStatus.AlreadyOk => "already in place",
+        PlaceStatus.WindowNotFound => "not open",
+        PlaceStatus.MonitorDisconnected => "its monitor is not connected",
+        PlaceStatus.AccessDenied => "runs as administrator; WinPla can't move it",
+        _ => "couldn't be moved",
     };
 }

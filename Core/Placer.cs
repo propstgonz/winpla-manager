@@ -7,7 +7,7 @@ public static class Placer
 {
     const int Tolerance = 2;
 
-    /// <summary>Función pura: rect normal de destino de una ventana cuyo rect normal actual es <paramref name="current"/>.</summary>
+    /// <summary>Pure function: target normal rect of a window whose current normal rect is <paramref name="current"/>.</summary>
     public static RectPx ComputeTarget(Rule rule, MonitorInfo monitor, RectPx current)
     {
         var wa = monitor.WorkArea;
@@ -20,7 +20,7 @@ public static class Placer
         return new RectPx(wa.X + (wa.Width - w) / 2, wa.Y + (wa.Height - h) / 2, w, h);
     }
 
-    /// <summary>Coloca la ventana según la regla. Idempotente: devuelve AlreadyOk si no hay nada que cambiar.</summary>
+    /// <summary>Places the window according to the rule. Idempotent: returns AlreadyOk if there is nothing to change.</summary>
     public static PlaceStatus Apply(WindowInfo window, Rule rule, MonitorInfo monitor)
     {
         var h = window.Handle;
@@ -48,12 +48,12 @@ public static class Placer
         wp.rcNormalPosition = new RECT { Left = target.X - dx, Top = target.Y - dy, Right = target.X + target.Width - dx, Bottom = target.Y + target.Height - dy };
         if (min)
         {
-            // minimizada se queda minimizada; al restaurar aparece donde debe
+            // a minimized window stays minimized; when restored it appears where it should
             wp.showCmd = SW_SHOWMINNOACTIVE;
             wp.flags = wantMax ? wp.flags | WPF_RESTORETOMAXIMIZED : wp.flags & ~WPF_RESTORETOMAXIMIZED;
             return Set(h, ref wp);
         }
-        // Paso 1: a normal en el destino (maximizar directamente no mueve una ventana ya maximizada en otro monitor)
+        // Step 1: to normal at the target (maximizing directly doesn't move a window already maximized on another monitor)
         wp.flags &= ~WPF_RESTORETOMAXIMIZED;
         wp.showCmd = SW_SHOWNOACTIVATE;
         var s = Set(h, ref wp);

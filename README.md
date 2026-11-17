@@ -4,9 +4,6 @@ WinPla puts the windows of the applications you choose on the monitor you want, 
 normal size or at an exact position, every time you sign in to Windows. It runs for a few minutes after
 sign-in, places the windows, and then closes itself. Nothing stays running in the background.
 
-The program's interface is in Spanish. This guide quotes the Spanish labels exactly as they appear on
-screen, with an English translation in parentheses the first time.
-
 ## Requirements
 
 - Windows 10 or 11.
@@ -30,8 +27,8 @@ You don't need anything else. In particular, you don't need the .NET SDK or Visu
 
 3. The installer downloads WinPla, adds a **WinPla** shortcut to the Start menu and opens the program.
    If PowerShell 7 is missing, it says so, shows the `winget` command above and changes nothing.
-4. In the WinPla window, under **Configuración** (Settings), tick **Iniciar con Windows** (Start with
-   Windows). Until you do this, nothing happens at sign-in.
+4. In the WinPla window, under **Settings**, tick **Start with Windows**. Until you do this, nothing
+   happens at sign-in.
 
 **Update:** run the same command again. The program files are replaced, but your rules and settings are kept.
 
@@ -40,7 +37,7 @@ itself each time it starts (see [Why PowerShell and not an .exe](#why-powershell
 
 **Uninstall:**
 
-1. Open WinPla, untick **Iniciar con Windows** and close it.
+1. Open WinPla, untick **Start with Windows** and close it.
 2. Delete the folder `%APPDATA%\WinPla` (paste that path into the File Explorer address bar to find it).
 3. Delete the **WinPla** shortcut from the Start menu. It is the file
    `%APPDATA%\Microsoft\Windows\Start Menu\Programs\WinPla.lnk`.
@@ -57,82 +54,82 @@ Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\WinPla.lnk"
 
 The main window has three sections:
 
-- **Aplicaciones** (Applications): your rules. Each rule says "the windows of this program go to this
+- **Applications**: your rules. Each rule says "the windows of this program go to this
   monitor, in this mode".
-- **Monitores** (Monitors): the monitors that are connected now. Each one is shown with its number, its
-  resolution, **Principal** (Primary) if it is the main monitor, and its name as Windows reports it
+- **Monitors**: the monitors that are connected now. Each one is shown with its number, its
+  resolution, **Primary** if it is the main monitor, and its name as Windows reports it
   (for example "LG ULTRAGEAR"). If Windows has no name for a monitor, its model code is shown instead
   (for example `GSM5C00`). The list updates when you connect or disconnect a monitor.
-- **Configuración** (Settings): the two settings and the **Aplicar reglas ahora** (Apply rules now) button.
+- **Settings**: the two settings and the **Apply rules now** button.
 
 ### Add a rule
 
-Click **Añadir aplicación** (Add application). In the dialog, choose the program in one of three ways:
+Click **Add application**. In the dialog, choose the program in one of three ways:
 
 | Option | When to use it |
 |---|---|
-| **Examinar…** (Browse) | Choose the program's `.exe` file. Use it when the program is not open and is not in the startup list. It only works if the window belongs to that same `.exe` (see the Steam case below). |
-| **…o elige una ventana abierta** (…or pick an open window) | Lists the programs that have a window open right now, as "program — window title". **This is the most reliable option**, because it picks exactly the program that owns the window. Open the program first. |
-| **…o elige una aplicación del arranque de Windows** (…or pick an app from Windows startup) | Lists the programs that start automatically with Windows and are enabled, which are the same ones shown as enabled in Task Manager → Startup apps. Handy when you want to place exactly those programs. For launchers such as Discord or Slack (`Update.exe --processStart …`), it picks the real program. Microsoft Store apps are not listed, and entries started through a script (`.bat`, `cmd`) can't be resolved to the real program. |
+| **Browse…** | Choose the program's `.exe` file. Use it when the program is not open and is not in the startup list. It only works if the window belongs to that same `.exe` (see the Steam case below). |
+| **…or pick an open window** | Lists the programs that have a window open right now, as "program — window title". **This is the most reliable option**, because it picks exactly the program that owns the window. Open the program first. |
+| **…or pick an app that starts with Windows** | Lists the programs that start automatically with Windows and are enabled, which are the same ones shown as enabled in Task Manager → Startup apps. Handy when you want to place exactly those programs. For launchers such as Discord or Slack (`Update.exe --processStart …`), it picks the real program. Microsoft Store apps are not listed, and entries started through a script (`.bat`, `cmd`) can't be resolved to the real program. |
 
 **When the window belongs to another program (Steam, for example).** Some programs start with one `.exe`
 and show their window from a different one. Steam starts as `steam.exe`, but its window belongs to
 `steamwebhelper.exe`. A rule for `steam.exe`, whether picked with Browse or from the startup list, never finds a window.
-In those cases, open the program and choose it from **…o elige una ventana abierta**. The dialog
+In those cases, open the program and choose it from **…or pick an open window**. The dialog
 says the same: if an application's window is not being placed, open it and pick it from the list of open windows.
 
 You can have only one rule per program. If you try to add a second one, WinPla asks you to edit the existing rule instead.
 
 ### Choose the monitor and the mode
 
-Under **Monitor**, pick the target monitor. Under **Modo** (Mode), pick one of:
+Under **Monitor**, pick the target monitor. Under **Mode**, pick one of:
 
-- **Maximizada** (Maximized): the window is moved to that monitor and maximized.
-- **Normal (se mueve al monitor conservando su tamaño)** (Normal: moved to the monitor, keeping its size):
+- **Maximized**: the window is moved to that monitor and maximized.
+- **Normal (moves to the monitor and keeps its size)**:
   the window is not maximized. If it is already on that monitor, it stays where it is. Otherwise, it is
   centered on the monitor. If it is bigger than the monitor, it is shrunk to fit.
-- **Personalizada** (Custom): an exact position and size. Fill in **X**, **Y**, **Ancho** (Width) and **Alto**
-  (Height), in pixels from the top-left corner of the monitor's usable area (the screen minus the taskbar).
+- **Custom**: an exact position and size. Fill in **X**, **Y**, **Width** and **Height**,
+  in pixels from the top-left corner of the monitor's usable area (the screen minus the taskbar).
   These are real screen pixels, not scaled ones. Width and height must be greater than 0.
 
   The easiest way to fill these in is to put the window where you want it, then click
-  **Usar la posición actual de la ventana** (Use the window's current position). WinPla reads where the
+  **Use the window's current position**. WinPla reads where the
   window is now, selects the monitor it is on, and fills in X, Y, width and height. The program must be open.
 
-Click **Aceptar** (OK) to save or **Cancelar** (Cancel) to discard.
+Click **OK** to save or **Cancel** to discard.
 
 ### Manage rules
 
 Each rule in the list shows the program's icon and name, its monitor and its mode. Next to it are:
 
-- **Activada** (Enabled): untick it to turn the rule off without deleting it. A disabled rule is ignored
-  at sign-in and by **Aplicar reglas ahora**.
-- **Editar** (Edit) and **Eliminar** (Delete). Delete asks for confirmation first.
+- **Enabled**: untick it to turn the rule off without deleting it. A disabled rule is ignored
+  at sign-in and by **Apply rules now**.
+- **Edit** and **Remove**. Remove asks for confirmation first.
 
-If a rule's monitor is not connected, the rule shows **Monitor desconectado** (Monitor disconnected) in red.
+If a rule's monitor is not connected, the rule shows **Monitor disconnected** in red.
 
 Every change is saved immediately. There is no save button.
 
 ### Apply rules now
 
-**Aplicar reglas ahora** places the windows that are open right now, once, and shows one line per window:
+**Apply rules now** places the windows that are open right now, once, and shows one line per window:
 
 | Result | Meaning |
 |---|---|
-| `colocada` | Placed. |
-| `ya estaba en su sitio` | Already in place. Nothing to do. |
-| `no está abierta` | The program has no window open. |
-| `su monitor no está conectado` | The rule's monitor is not connected. The window was not touched. |
-| `se ejecuta como administrador; WinPla no puede moverla` | The program runs as administrator. WinPla can't move it. |
-| `no se pudo mover` | Windows refused the move for another reason. |
+| `placed` | Placed. |
+| `already in place` | Already in place. Nothing to do. |
+| `not open` | The program has no window open. |
+| `its monitor is not connected` | The rule's monitor is not connected. The window was not touched. |
+| `runs as administrator; WinPla can't move it` | The program runs as administrator. WinPla can't move it. |
+| `couldn't be moved` | Windows refused the move for another reason. |
 
 This is a quick way to test a rule without signing out.
 
 ### Settings
 
-- **Iniciar con Windows** (Start with Windows): makes Windows run WinPla when you sign in. If you disable
+- **Start with Windows**: makes Windows run WinPla when you sign in. If you disable
   WinPla in Task Manager → Startup apps, this box appears unticked. Ticking it enables WinPla again.
-- **Colocar las ventanas automáticamente al iniciar sesión** (Place windows automatically at sign-in):
+- **Place windows automatically at sign-in**:
   turns the sign-in placement on or off without removing WinPla from startup. When it is off, WinPla still
   starts at sign-in but exits immediately.
 
@@ -140,7 +137,7 @@ This is a quick way to test a rule without signing out.
 
 Windows starts WinPla in the background, with no window and no tray icon. WinPla then:
 
-1. Exits immediately if **Colocar las ventanas automáticamente al iniciar sesión** is off, if there are no
+1. Exits immediately if **Place windows automatically at sign-in** is off, if there are no
    rules, or if another copy is already doing this.
 2. For **5 minutes** (300 seconds), checks once per second for windows of the programs in your enabled rules,
    and places them. Every window of the program is handled, not only the first, so a splash screen
@@ -159,7 +156,7 @@ to look when something doesn't work.
 ## Known limitations
 
 - **Windows that appear late.** If a program starts hidden in the tray and you open its window after the
-  5 minutes are up, WinPla doesn't place it. Click **Aplicar reglas ahora**, or make the watch time longer
+  5 minutes are up, WinPla doesn't place it. Click **Apply rules now**, or make the watch time longer
   by changing `WatchSeconds` in `config.json` (see below).
 - **Programs running as administrator** can't be moved. Windows doesn't let a normal program move them.
   WinPla reports this instead of failing silently.
@@ -179,8 +176,8 @@ to look when something doesn't work.
 |---|---|
 | `%APPDATA%\WinPla\app\` | The installed program (scripts, C# sources and XAML). Replaced when you update. |
 | `%APPDATA%\WinPla\config.json` | Your rules and settings. Plain JSON that you can edit by hand while WinPla is closed. If the file is damaged, it is renamed to `config.json.bak` and WinPla starts with no rules. |
-| `%APPDATA%\WinPla\log.txt` | What was placed and what failed, plus startup errors. When it grows past 512 KB, it is cleared and starts over. Log messages are in Spanish. |
-| `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `WinPla` | The "start with Windows" entry. Created and removed by **Iniciar con Windows**. |
+| `%APPDATA%\WinPla\log.txt` | What was placed and what failed, plus startup errors. When it grows past 512 KB, it is cleared and starts over. |
+| `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `WinPla` | The "start with Windows" entry. Created and removed by **Start with Windows**. |
 | `%APPDATA%\Microsoft\Windows\Start Menu\Programs\WinPla.lnk` | The Start menu shortcut. It opens WinPla without a console window. |
 
 `config.json` looks like this. `WatchSeconds` can only be changed here.
@@ -224,7 +221,7 @@ dotnet publish -c Release -o dist
 ```
 
 The `.exe` is framework-dependent, so the machine that runs it needs the **.NET Desktop Runtime 10**.
-`dist\` is not tracked by git. If you tick **Iniciar con Windows** from the `.exe`, the startup entry runs
+`dist\` is not tracked by git. If you tick **Start with Windows** from the `.exe`, the startup entry runs
 `"…\WinPla.exe" --startup`. The `.exe` and the PowerShell version share the same startup entry. When you
 open either one and the entry exists, it points the entry at itself.
 
@@ -244,7 +241,7 @@ The same sources build into `WinPla.exe` with `dotnet` and run under PowerShell 
 | `Core/Monitors.cs` | Connected monitors: stable ID, number, display name, bounds and work area. |
 | `Core/AppWindows.cs` | Enumerates top-level application windows and resolves the owning `.exe`. Also reads a window's restored rectangle. |
 | `Core/Placer.cs` | `ComputeTarget` (pure: target rectangle for a rule) and `Apply` (`Get/SetWindowPlacement`, idempotent, returns `AlreadyOk` when nothing changes). |
-| `Core/Engine.cs` | `ApplyOnce` (single pass, used by **Aplicar reglas ahora**) and `WatchAsync` (sign-in polling with per-window settle tracking). |
+| `Core/Engine.cs` | `ApplyOnce` (single pass, used by **Apply rules now**) and `WatchAsync` (sign-in polling with per-window settle tracking). |
 | `Core/StartupApps.cs` | Enabled startup apps from the `Run` keys (HKCU, HKLM, HKLM WOW6432Node) and both Startup folders, honouring `StartupApproved`. Resolves Squirrel `Update.exe --processStart X.exe` to `X.exe`. |
 | `Core/SelfTest.cs` | Fixed-case checks of `Placer.ComputeTarget` and `StartupApps.ParseCommand`. |
 | `Storage/ConfigStore.cs` | Loads and saves `config.json` (atomic write through a `.tmp` file; invalid JSON is moved to `.bak`). |
@@ -305,7 +302,7 @@ skips opening the UI at the end.
   ```
 
   Exit code `0` and `Selftest OK` in `log.txt` mean it passed. Otherwise, the exit code is `1` and the log
-  shows `Selftest FALLO:` followed by the first failing case, or a `WinPla.ps1:` error if compilation failed.
+  shows `Selftest FAILED:` followed by the first failing case, or a `WinPla.ps1:` error if compilation failed.
 - **Type-check build** (needs the .NET 10 SDK): `dotnet build`. Because `WinPla.ps1` only compiles at
   run time, this is the quickest way to catch C# errors. XAML is loaded at run time in both cases, so XAML
   mistakes only show up when the window opens.

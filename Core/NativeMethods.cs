@@ -36,7 +36,7 @@ internal static class NativeMethods
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
     }
 
-    // QueryDisplayConfig: solo los campos que se leen; Size fija el tamaño real de cada struct.
+    // QueryDisplayConfig: only the fields that are read; Size sets the real size of each struct.
     [StructLayout(LayoutKind.Sequential)] public struct LUID { public uint LowPart; public int HighPart; }
 
     [StructLayout(LayoutKind.Sequential, Size = 72)]

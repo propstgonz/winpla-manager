@@ -10,10 +10,10 @@ public static class StartupApps
     const string Win = @"Software\Microsoft\Windows\CurrentVersion\";
     const string Approved = Win + @"Explorer\StartupApproved\";
 
-    // ponytail: las tareas de inicio de apps empaquetadas de la Store (UWP/MSIX, StartupTask del manifiesto) quedan fuera;
-    // no están en Run ni en carpetas. Añadirlas exigiría leer el manifiesto de cada paquete.
+    // ponytail: startup tasks of packaged Store apps (UWP/MSIX, StartupTask in the manifest) are left out;
+    // they are not in Run or in the folders. Adding them would require reading each package's manifest.
 
-    /// <summary>Apps de arranque activadas (Run de registro y carpetas Inicio), sin duplicados por ExeName y sin WinPla. No lanza.</summary>
+    /// <summary>Enabled startup apps (registry Run keys and Startup folders), without duplicates by ExeName and without WinPla. Doesn't throw.</summary>
     public static IReadOnlyList<StartupApp> GetAll()
     {
         var found = new List<StartupApp>();
@@ -64,7 +64,7 @@ public static class StartupApps
                     Add(Path.GetFileNameWithoutExtension(file), $"\"{target}\" {args}");
                 }
             }
-            catch (Exception ex) { Log.Write($"StartupApps carpeta {folder}: {ex.Message}"); }
+            catch (Exception ex) { Log.Write($"StartupApps folder {folder}: {ex.Message}"); }
         }
 
         return found
@@ -73,8 +73,8 @@ public static class StartupApps
             .ToList();
     }
 
-    /// <summary>Extrae el ejecutable real de una línea de arranque. Pura (no toca disco). null si no hay un .exe reconocible.
-    /// Squirrel ("Update.exe --processStart X.exe"): ExeName es X.exe y ExePath la de Update.exe.</summary>
+    /// <summary>Extracts the real executable from a startup command line. Pure (doesn't touch the disk). null if there is no recognizable .exe.
+    /// Squirrel ("Update.exe --processStart X.exe"): ExeName is X.exe and ExePath is the path of Update.exe.</summary>
     public static (string ExeName, string ExePath)? ParseCommand(string commandLine)
     {
         var s = Environment.ExpandEnvironmentVariables(commandLine ?? "").Trim();
@@ -105,7 +105,7 @@ public static class StartupApps
         return (name, path);
     }
 
-    // Squirrel instala el exe real en <dir de Update.exe>\app-<versión>\; se usa la carpeta más reciente que lo contenga.
+    // Squirrel installs the real exe in <Update.exe dir>\app-<version>\; the most recent folder that contains it is used.
     static string? FindInAppDir(string updateExe, string exeName)
     {
         var dir = Path.GetDirectoryName(updateExe);
@@ -116,7 +116,7 @@ public static class StartupApps
             .FirstOrDefault(File.Exists);
     }
 
-    // Desactivada = valor binario en StartupApproved (HKCU o HKLM) con el primer byte impar. Mismo criterio que Autostart.
+    // Disabled = binary value in StartupApproved (HKCU or HKLM) whose first byte is odd. Same rule as Autostart.
     static bool IsDisabled(string approvedName, string valueName)
     {
         foreach (var hive in new[] { Registry.CurrentUser, Registry.LocalMachine })
@@ -126,7 +126,7 @@ public static class StartupApps
                 using var k = hive.OpenSubKey(Approved + approvedName);
                 if (k?.GetValue(valueName) is byte[] { Length: > 0 } b && (b[0] & 1) == 1) return true;
             }
-            catch { /* clave ilegible: se trata como activada */ }
+            catch { /* unreadable key: treated as enabled */ }
         }
         return false;
     }

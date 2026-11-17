@@ -2,7 +2,7 @@ using System.Windows.Markup;
 
 namespace WinPla;
 
-/// <summary>Carga XAML suelto: del disco si Dir está fijado (WinPla.ps1), si no del recurso incrustado (exe).</summary>
+/// <summary>Loads loose XAML: from disk if Dir is set (WinPla.ps1), otherwise from the embedded resource (exe).</summary>
 public static class Ui
 {
     public static string? Dir { get; set; }

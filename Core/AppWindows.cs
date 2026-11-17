@@ -6,7 +6,7 @@ namespace WinPla;
 
 public static class AppWindows
 {
-    /// <summary>Ventanas de aplicación de nivel superior visibles (incluye minimizadas; excluye tool windows, con dueño, cloaked y las del propio WinPla).</summary>
+    /// <summary>Visible top-level application windows (includes minimized ones; excludes tool windows, owned windows, cloaked windows and WinPla's own).</summary>
     public static IReadOnlyList<WindowInfo> GetAll()
     {
         var list = new List<WindowInfo>();
@@ -34,7 +34,7 @@ public static class AppWindows
         return list;
     }
 
-    /// <summary>Rect restaurado ("normal") de la ventana en coordenadas de pantalla virtual; null si el handle ya no es válido.</summary>
+    /// <summary>Restored ("normal") rect of the window in virtual-screen coordinates; null if the handle is no longer valid.</summary>
     public static RectPx? GetRect(nint hwnd)
     {
         var wp = new WINDOWPLACEMENT { length = Marshal.SizeOf<WINDOWPLACEMENT>() };
@@ -44,7 +44,7 @@ public static class AppWindows
         return new RectPx(r.Left + dx, r.Top + dy, r.Right - r.Left, r.Bottom - r.Top);
     }
 
-    /// <summary>rcNormalPosition está en coordenadas de "workspace": origen en la esquina del área de trabajo del monitor principal (barra arriba/izquierda lo desplaza).</summary>
+    /// <summary>rcNormalPosition is in "workspace" coordinates: origin at the corner of the primary monitor's work area (a taskbar at the top/left shifts it).</summary>
     internal static (int dx, int dy) WorkspaceOffset()
     {
         SystemParametersInfo(0x30 /* SPI_GETWORKAREA */, 0, out RECT wa, 0);

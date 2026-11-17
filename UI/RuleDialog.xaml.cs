@@ -19,7 +19,7 @@ public class RuleDialog : Window
     readonly RadioButton MaxRadio, NormalRadio, CustomRadio;
     readonly FrameworkElement CustomPanel;
 
-    /// <summary>Regla resultante si se aceptó (nueva instancia).</summary>
+    /// <summary>Resulting rule if the dialog was accepted (new instance).</summary>
     public Rule? Result { get; private set; }
 
     public RuleDialog(Rule? existing, IReadOnlyList<Rule> all)
@@ -43,7 +43,7 @@ public class RuleDialog : Window
         foreach (var r in new[] { MaxRadio, NormalRadio, CustomRadio }) r.Checked += Mode_Changed;
         _existing = existing;
         _all = all;
-        Title = existing == null ? "Añadir aplicación" : "Editar aplicación";
+        Title = existing == null ? "Add application" : "Edit application";
 
         try
         {
@@ -68,7 +68,7 @@ public class RuleDialog : Window
         try { items.AddRange(Monitors.GetAll().Select(m => new MonItem(m.Id, $"{m.Label} — {m.Name}", m))); }
         catch (Exception ex) { Log.Write("Monitors.GetAll: " + ex); }
         if (existing != null && items.All(i => i.Id != existing.MonitorId))
-            items.Insert(0, new MonItem(existing.MonitorId, existing.MonitorLabel + " (desconectado)", null));
+            items.Insert(0, new MonItem(existing.MonitorId, existing.MonitorLabel + " (disconnected)", null));
         MonitorBox.ItemsSource = items;
 
         if (existing != null)
@@ -109,7 +109,7 @@ public class RuleDialog : Window
         }
     }
 
-    // Deseleccionar otro desplegable por código dispara su SelectionChanged con SelectedItem == null: no hace nada, así que no hay bucle.
+    // Deselecting another drop-down from code raises its SelectionChanged with SelectedItem == null: it does nothing, so there is no loop.
     void Startup_Selected(object sender, SelectionChangedEventArgs e)
     {
         if (StartupBox.SelectedItem is not StartupItem s) return;
@@ -126,7 +126,7 @@ public class RuleDialog : Window
 
     void Browse_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new OpenFileDialog { Filter = "Aplicaciones (*.exe)|*.exe", Title = "Elige una aplicación" };
+        var dlg = new OpenFileDialog { Filter = "Applications (*.exe)|*.exe", Title = "Choose an application" };
         if (dlg.ShowDialog(this) != true) return;
         SetApp(System.IO.Path.GetFileName(dlg.FileName), dlg.FileName);
         WindowsBox.SelectedIndex = -1;
@@ -147,17 +147,17 @@ public class RuleDialog : Window
 
     void UseCurrent_Click(object sender, RoutedEventArgs e)
     {
-        if (_exeName == "") { Info("Primero elige la aplicación."); return; }
+        if (_exeName == "") { Info("Choose the application first."); return; }
         try
         {
             var win = AppWindows.GetAll().FirstOrDefault(w => w.ExeName.Equals(_exeName, StringComparison.OrdinalIgnoreCase));
-            if (win == null) { Info($"{_exeName} no está abierta. Ábrela y vuelve a intentarlo."); return; }
+            if (win == null) { Info($"{_exeName} isn't open. Open it and try again."); return; }
             var r = AppWindows.GetRect(win.Handle);
-            if (r == null) { Info("No se pudo leer la posición de la ventana."); return; }
+            if (r == null) { Info("Couldn't read the window's position."); return; }
             int cx = r.Value.X + r.Value.Width / 2, cy = r.Value.Y + r.Value.Height / 2;
             var mon = Monitors.GetAll().FirstOrDefault(m =>
                 cx >= m.Bounds.X && cx < m.Bounds.X + m.Bounds.Width && cy >= m.Bounds.Y && cy < m.Bounds.Y + m.Bounds.Height);
-            if (mon == null) { Info("La ventana no está en ningún monitor conectado."); return; }
+            if (mon == null) { Info("The window isn't on any connected monitor."); return; }
             MonitorBox.SelectedItem = ((IEnumerable<MonItem>)MonitorBox.ItemsSource).FirstOrDefault(i => i.Id == mon.Id);
             XBox.Text = (r.Value.X - mon.WorkArea.X).ToString();
             YBox.Text = (r.Value.Y - mon.WorkArea.Y).ToString();
@@ -167,7 +167,7 @@ public class RuleDialog : Window
         catch (Exception ex)
         {
             Log.Write("UseCurrent: " + ex);
-            Info("No se pudo leer la ventana.");
+            Info("Couldn't read the window.");
         }
     }
 
@@ -175,10 +175,10 @@ public class RuleDialog : Window
 
     void Ok_Click(object sender, RoutedEventArgs e)
     {
-        if (_exeName == "") { Info("Elige una aplicación."); return; }
-        if (MonitorBox.SelectedItem is not MonItem mon) { Info("Elige un monitor."); return; }
+        if (_exeName == "") { Info("Choose an application."); return; }
+        if (MonitorBox.SelectedItem is not MonItem mon) { Info("Choose a monitor."); return; }
         if (_all.Any(r => r != _existing && r.ExeName.Equals(_exeName, StringComparison.OrdinalIgnoreCase)))
-        { Info($"Ya hay una regla para {_exeName}. Edítala en lugar de añadir otra."); return; }
+        { Info($"There's already a rule for {_exeName}. Edit it instead of adding another one."); return; }
 
         var rule = new Rule
         {
@@ -194,8 +194,8 @@ public class RuleDialog : Window
         {
             if (!int.TryParse(XBox.Text, out int x) || !int.TryParse(YBox.Text, out int y)
                 || !int.TryParse(WBox.Text, out int w) || !int.TryParse(HBox.Text, out int h))
-            { Info("X, Y, Ancho y Alto deben ser números enteros."); return; }
-            if (w <= 0 || h <= 0) { Info("El ancho y el alto deben ser mayores que 0."); return; }
+            { Info("X, Y, Width and Height must be whole numbers."); return; }
+            if (w <= 0 || h <= 0) { Info("Width and Height must be greater than 0."); return; }
             (rule.X, rule.Y, rule.Width, rule.Height) = (x, y, w, h);
         }
         Result = rule;

@@ -2,13 +2,13 @@
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
 
-            <!-- Reglas -->
+            <!-- Rules -->
             <DockPanel Margin="0,0,0,12">
-                <Button DockPanel.Dock="Right" Content="Añadir aplicación" Padding="16,6" x:Name="AddButton"
+                <Button DockPanel.Dock="Right" Content="Add application" Padding="16,6" x:Name="AddButton"
                         Style="{DynamicResource AccentButtonStyle}"/>
-                <TextBlock Text="Aplicaciones" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <TextBlock Text="Applications" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </DockPanel>
-            <TextBlock x:Name="EmptyText" Text="Aún no hay aplicaciones. Añade una para empezar."
+            <TextBlock x:Name="EmptyText" Text="No applications yet. Add one to get started."
                        Opacity="0.7" Margin="0,8,0,8"/>
             <ItemsControl x:Name="RulesList">
                 <ItemsControl.ItemTemplate>
@@ -28,21 +28,21 @@
                                     <TextBlock Opacity="0.75" TextWrapping="Wrap">
                                         <Run Text="{Binding MonitorText, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding ModeText, Mode=OneWay}"/>
                                     </TextBlock>
-                                    <TextBlock Text="Monitor desconectado" Foreground="OrangeRed"
+                                    <TextBlock Text="Monitor disconnected" Foreground="OrangeRed"
                                                Visibility="{Binding DisconnectedVisibility}"/>
                                 </StackPanel>
-                                <CheckBox Grid.Column="2" Content="Activada" IsChecked="{Binding Enabled, Mode=OneWay}"
+                                <CheckBox Grid.Column="2" Content="Enabled" IsChecked="{Binding Enabled, Mode=OneWay}"
                                           Margin="8,0" VerticalAlignment="Center" Tag="enabled"/>
-                                <Button Grid.Column="3" Content="Editar" Margin="4,0" Padding="12,4" Tag="edit"/>
-                                <Button Grid.Column="4" Content="Eliminar" Padding="12,4" Tag="delete"/>
+                                <Button Grid.Column="3" Content="Edit" Margin="4,0" Padding="12,4" Tag="edit"/>
+                                <Button Grid.Column="4" Content="Remove" Padding="12,4" Tag="delete"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Monitores -->
-            <TextBlock Text="Monitores" FontSize="22" FontWeight="SemiBold" Margin="0,28,0,8"/>
+            <!-- Monitors -->
+            <TextBlock Text="Monitors" FontSize="22" FontWeight="SemiBold" Margin="0,28,0,8"/>
             <ItemsControl x:Name="MonitorsList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -53,12 +53,12 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Configuración -->
-            <TextBlock Text="Configuración" FontSize="22" FontWeight="SemiBold" Margin="0,28,0,8"/>
-            <CheckBox x:Name="AutostartBox" Content="Iniciar con Windows" Margin="0,4" />
-            <CheckBox x:Name="AutoPlaceBox" Content="Colocar las ventanas automáticamente al iniciar sesión"
+            <!-- Settings -->
+            <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" Margin="0,28,0,8"/>
+            <CheckBox x:Name="AutostartBox" Content="Start with Windows" Margin="0,4" />
+            <CheckBox x:Name="AutoPlaceBox" Content="Place windows automatically at sign-in"
                       Margin="0,4" />
-            <Button x:Name="ApplyButton" Content="Aplicar reglas ahora" HorizontalAlignment="Left"
+            <Button x:Name="ApplyButton" Content="Apply rules now" HorizontalAlignment="Left"
                     Padding="16,6" Margin="0,12,0,0" />
             <TextBlock x:Name="ResultText" TextWrapping="Wrap" Margin="0,12,0,0"/>
         </StackPanel>

@@ -15,7 +15,7 @@ public static class ConfigStore
     public static string Path { get; } = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinPla", "config.json");
 
-    /// <summary>Nunca lanza: si no existe devuelve Config por defecto; si está corrupto lo aparta como .bak y devuelve Config por defecto.</summary>
+    /// <summary>Never throws: if the file doesn't exist, returns the default Config; if it is corrupt, moves it aside as .bak and returns the default Config.</summary>
     public static Config Load()
     {
         try
@@ -28,17 +28,17 @@ public static class ConfigStore
                 if (config.WatchSeconds <= 0) config.WatchSeconds = 300;
                 return config;
             }
-            catch (JsonException ex) // solo JSON inválido; un bloqueo de lectura (IOException) no debe apartar una config sana
+            catch (JsonException ex) // invalid JSON only; a read lock (IOException) must not move a healthy config aside
             {
-                Log.Write("config.json ilegible, se aparta como .bak: " + ex.Message);
+                Log.Write("config.json is unreadable, moving it aside as .bak: " + ex.Message);
                 File.Move(Path, Path + ".bak", overwrite: true);
             }
         }
-        catch (Exception ex) { Log.Write("No se pudo apartar config.json: " + ex.Message); }
+        catch (Exception ex) { Log.Write("Couldn't move config.json aside: " + ex.Message); }
         return new Config();
     }
 
-    /// <summary>Escritura atómica (temporal + reemplazo). Lanza si no se puede guardar.</summary>
+    /// <summary>Atomic write (temporary file + replace). Throws if it can't be saved.</summary>
     public static void Save(Config config)
     {
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);

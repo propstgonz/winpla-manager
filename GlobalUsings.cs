@@ -1,4 +1,4 @@
-// Add-Type no conoce ImplicitUsings: se declaran aquí, igual para exe y para WinPla.ps1.
+// Add-Type doesn't know about ImplicitUsings: they are declared here, the same for the exe and for WinPla.ps1.
 global using System;
 global using System.Collections.Generic;
 global using System.IO;

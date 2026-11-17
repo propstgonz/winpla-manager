@@ -1,13 +1,13 @@
-# Instalador de WinPla. Uso:
+# WinPla installer. Usage:
 #   irm https://raw.githubusercontent.com/propstgonz/winpla-manager/main/install.ps1 | iex
-# Instala (o actualiza) en %APPDATA%\WinPla\app, crea el acceso directo del menú Inicio y abre el programa.
-# No toca nunca config.json ni log.txt. Compatible con Windows PowerShell 5.1 y PowerShell 7.
-# Gancho de pruebas: $env:WINPLA_SOURCE_ZIP = zip local en lugar de descargar.
-# Gancho de pruebas: $env:WINPLA_NO_LAUNCH  = no abrir la interfaz al final.
+# Installs (or updates) into %APPDATA%\WinPla\app, creates the Start menu shortcut and opens the program.
+# Never touches config.json or log.txt. Compatible with Windows PowerShell 5.1 and PowerShell 7.
+# Test hook: $env:WINPLA_SOURCE_ZIP = local zip instead of downloading.
+# Test hook: $env:WINPLA_NO_LAUNCH  = don't open the UI at the end.
 
 function Install-WinPla {
     $ErrorActionPreference = 'Stop'
-    $ProgressPreference = 'SilentlyContinue'   # en 5.1 la barra de progreso ralentiza mucho la descarga
+    $ProgressPreference = 'SilentlyContinue'   # in 5.1 the progress bar slows the download down a lot
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
     $url  = 'https://github.com/propstgonz/winpla-manager/archive/refs/heads/main.zip'
@@ -15,14 +15,14 @@ function Install-WinPla {
     $app  = Join-Path $base 'app'
     $tmp  = Join-Path ([IO.Path]::GetTempPath()) ('WinPla-' + [guid]::NewGuid().ToString('N'))
 
-    # 1) pwsh es quien ejecuta el programa; misma lógica que WinPla.ps1 (alias de la Store si existe)
+    # 1) pwsh is what runs the program; same logic as WinPla.ps1 (the Store alias if it exists)
     $pwsh = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\pwsh.exe'
     if (-not (Test-Path $pwsh)) {
         $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
         if (-not $cmd) {
-            Write-Host 'WinPla necesita PowerShell 7. Instálalo con:' -ForegroundColor Yellow
+            Write-Host 'WinPla needs PowerShell 7. Install it with:' -ForegroundColor Yellow
             Write-Host '  winget install --id Microsoft.PowerShell --source winget'
-            Write-Host 'y vuelve a ejecutar este comando.'
+            Write-Host 'then run this command again.'
             return
         }
         $pwsh = $cmd.Source
@@ -31,24 +31,24 @@ function Install-WinPla {
     try {
         New-Item -ItemType Directory -Path $tmp | Out-Null
 
-        # 2) descargar y extraer
+        # 2) download and extract
         $zip = $env:WINPLA_SOURCE_ZIP
         if (-not $zip) {
-            Write-Host 'Descargando WinPla...'
+            Write-Host 'Downloading WinPla...'
             $zip = Join-Path $tmp 'winpla.zip'
             Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
         }
-        Write-Host 'Extrayendo...'
+        Write-Host 'Extracting...'
         $ext = Join-Path $tmp 'ext'
         Expand-Archive -LiteralPath $zip -DestinationPath $ext -Force
 
-        # 3) validar antes de tocar la instalación existente (la raíz del zip es winpla-manager-main\)
+        # 3) validate before touching the existing installation (the zip root is winpla-manager-main\)
         $src = Get-ChildItem $ext -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'WinPla.ps1') } | Select-Object -First 1
-        if (-not $src) { throw 'El paquete descargado no contiene WinPla.ps1. No se ha modificado nada.' }
+        if (-not $src) { throw 'The downloaded package does not contain WinPla.ps1. Nothing was changed.' }
         $srcDir = $src.FullName.TrimEnd('\')
 
-        # 4) preparar la copia nueva en una carpeta hermana y reemplazar solo si todo ha ido bien
-        Write-Host 'Instalando en' $app
+        # 4) prepare the new copy in a sibling folder and replace only if everything went well
+        Write-Host 'Installing to' $app
         $new = Join-Path $base 'app.new'
         $old = Join-Path $base 'app.old'
         Remove-Item $new, $old -Recurse -Force -ErrorAction SilentlyContinue
@@ -68,25 +68,25 @@ function Install-WinPla {
         catch { if (Test-Path $old) { Move-Item $old $app }; throw }
         Remove-Item $old -Recurse -Force -ErrorAction SilentlyContinue
 
-        # 5) acceso directo del menú Inicio, sin consola
+        # 5) Start menu shortcut, no console
         $lnkArgs = '--headless "{0}" -NoProfile -STA -File "{1}\WinPla.ps1"' -f $pwsh, $app
         $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Programs')) 'WinPla.lnk'))
         $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\conhost.exe'
         $lnk.Arguments = $lnkArgs
         $lnk.WorkingDirectory = $app
         $lnk.Save()
-        Write-Host 'Acceso directo creado: menú Inicio > WinPla'
+        Write-Host 'Shortcut created: Start menu > WinPla'
 
-        # 7) abrir la interfaz sin consola
+        # 7) open the UI without a console
         if (-not $env:WINPLA_NO_LAUNCH) {
-            Write-Host 'Abriendo WinPla...'
+            Write-Host 'Opening WinPla...'
             Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\conhost.exe') -ArgumentList $lnkArgs
         }
-        Write-Host 'Listo.' -ForegroundColor Green
+        Write-Host 'Done.' -ForegroundColor Green
     }
     catch { Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red }
     finally {
-        # 6) limpiar temporales
+        # 6) clean up temporary files
         Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
         Remove-Item (Join-Path $base 'app.new') -Recurse -Force -ErrorAction SilentlyContinue
     }
