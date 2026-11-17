@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>WinPla</AssemblyName>
+    <RootNamespace>WinPla</RootNamespace>
+    <StartupObject>WinPla.App</StartupObject>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
+    <!-- WPF0001: ThemeMode (tema Fluent nativo) está marcado como experimental -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+  </PropertyGroup>
+
+  <!-- XAML suelto: se carga en tiempo de ejecución con XamlReader (también bajo WinPla.ps1) -->
+  <ItemGroup>
+    <Page Remove="UI\*.xaml" />
+    <EmbeddedResource Include="UI\*.xaml" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
