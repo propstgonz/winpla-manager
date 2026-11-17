@@ -11,7 +11,8 @@ public static class App
     [STAThread]
     public static int Main(string[] args)
     {
-        // PerMonitorV2: the exe already gets it from the manifest; inside pwsh there is no manifest.
+        // PerMonitorV2: the exe already gets it from the manifest. Under pwsh this fails (pwsh's manifest already
+        // set System-aware), so the geometry code also switches its thread (see NativeMethods.SetThreadDpiAwarenessContext).
         try { SetProcessDpiAwarenessContext(-4); } catch { }
 
         // --startup: launched by the Run key at sign-in. No window; places the windows and exits.
@@ -35,6 +36,10 @@ public static class App
             Log.Write(error is null ? "Selftest OK" : "Selftest FAILED: " + error);
             return error is null ? 0 : 1;
         }
+
+        // One UI at a time: a second one would overwrite the first one's rules when either saves.
+        using var uiMutex = new Mutex(true, @"Local\WinPla.UI", out bool firstUi);
+        if (!firstUi) return 0;
 
         Autostart.Refresh();
         var app = new Application();

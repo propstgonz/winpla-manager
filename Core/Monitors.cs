@@ -8,6 +8,13 @@ public static class Monitors
     /// <summary>Monitors that are connected and active right now. Queried on every call (no cache).</summary>
     public static IReadOnlyList<MonitorInfo> GetAll()
     {
+        var oldDpi = SetThreadDpiAwarenessContext(PER_MONITOR_AWARE_V2);
+        try { return GetAllPhysical(); }
+        finally { SetThreadDpiAwarenessContext(oldDpi); }
+    }
+
+    static List<MonitorInfo> GetAllPhysical()
+    {
         var list = new List<MonitorInfo>();
         var friendly = FriendlyNames();
         EnumDisplayMonitors(0, 0, (nint h, nint _, ref RECT _, nint _) =>

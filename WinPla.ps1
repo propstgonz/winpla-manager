@@ -17,13 +17,14 @@ try {
     $refs = Get-ChildItem (Join-Path $PSHOME 'ref/*.dll') -Exclude WindowsBase.dll | ForEach-Object FullName
     $refs += 'PresentationFramework', 'PresentationCore', 'WindowsBase', 'System.Xaml', 'System.Drawing.Common',
              'System.Private.Windows.GdiPlus', 'System.Private.Windows.Core', 'Microsoft.Win32.Registry', 'Microsoft.Win32.SystemEvents' | ForEach-Object { Join-Path $PSHOME "$_.dll" }
-    $src = Get-ChildItem $root -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } | ForEach-Object FullName
+    # bin/obj are filtered on the path relative to $root (the clone itself may live under a folder named bin or obj)
+    $src = Get-ChildItem -LiteralPath $root -Recurse -Filter *.cs | Where-Object { $_.FullName.Substring($root.Length) -notmatch '[\\/](bin|obj)[\\/]' } | ForEach-Object FullName
     Add-Type -Path $src -ReferencedAssemblies $refs -CompilerOptions '/nullable:enable', '/nowarn:WPF0001'
 
     [WinPla.Ui]::Dir = Join-Path $root 'UI'
     $pwsh = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\pwsh.exe'   # stable alias of the Store version
     if (-not (Test-Path $pwsh)) { $pwsh = [Environment]::ProcessPath }
-    [WinPla.Autostart]::Command = '"{0}\System32\conhost.exe" --headless "{1}" -NoProfile -STA -File "{2}" --startup' -f $env:SystemRoot, $pwsh, $PSCommandPath
+    [WinPla.Autostart]::Command = '"{0}\System32\conhost.exe" --headless "{1}" -NoProfile -ExecutionPolicy Bypass -STA -File "{2}" --startup' -f $env:SystemRoot, $pwsh, $PSCommandPath
 
     exit [WinPla.App]::Main([string[]]$args)
 }

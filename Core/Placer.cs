@@ -25,26 +25,27 @@ public static class Placer
     {
         var h = window.Handle;
         var wp = new WINDOWPLACEMENT { length = Marshal.SizeOf<WINDOWPLACEMENT>() };
-        if (!IsWindow(h) || !GetWindowPlacement(h, ref wp)) return PlaceStatus.Failed;
+        // a hung window would block SetWindowPlacement (it sends messages) until it responds
+        if (!IsWindow(h) || IsHungAppWindow(h) || !GetWindowPlacement(h, ref wp)) return PlaceStatus.Failed;
 
-        var (dx, dy) = AppWindows.WorkspaceOffset();
-        var n = wp.rcNormalPosition;
-        var cur = new RectPx(n.Left + dx, n.Top + dy, n.Right - n.Left, n.Bottom - n.Top);
+        var cur = AppWindows.FromWorkspace(wp.rcNormalPosition);
         var target = ComputeTarget(rule, monitor, cur);
         bool min = IsIconic(h), max = !min && wp.showCmd == SW_SHOWMAXIMIZED;
         bool restoreMax = min && (wp.flags & WPF_RESTORETOMAXIMIZED) != 0;
         bool wantMax = rule.Mode == PlacementMode.Maximized;
+        GetWindowRect(h, out RECT wr);
+        var actual = Monitors.ToRect(wr);
 
         bool ok;
         if (wantMax)
-        {
-            GetWindowRect(h, out RECT wr);
-            ok = min ? restoreMax && Inside(cur, monitor.Bounds) : max && Inside(Monitors.ToRect(wr), monitor.Bounds);
-        }
+            ok = min ? restoreMax && Inside(cur, monitor.Bounds) : max && Inside(actual, monitor.Bounds);
         else
-            ok = !max && !restoreMax && Near(cur, target);
+            // a snapped window keeps its pre-snap rect in rcNormalPosition: where it really is must agree too
+            ok = !max && !restoreMax && Near(cur, target)
+                && (min || (rule.Mode == PlacementMode.Custom ? Near(actual, target) : Inside(actual, monitor.Bounds)));
         if (ok) return PlaceStatus.AlreadyOk;
 
+        var (dx, dy) = AppWindows.WorkspaceOffset(monitor.Bounds, monitor.WorkArea);   // the target is on this monitor
         wp.rcNormalPosition = new RECT { Left = target.X - dx, Top = target.Y - dy, Right = target.X + target.Width - dx, Bottom = target.Y + target.Height - dy };
         if (min)
         {
@@ -65,6 +66,13 @@ public static class Placer
     static PlaceStatus Set(nint h, ref WINDOWPLACEMENT wp) =>
         SetWindowPlacement(h, ref wp) ? PlaceStatus.Placed
         : Marshal.GetLastWin32Error() == ERROR_ACCESS_DENIED ? PlaceStatus.AccessDenied : PlaceStatus.Failed;
+
+    /// <summary>Custom rule (as typed in the dialog) whose window lands on the monitor: centre inside its bounds and no larger than it.</summary>
+    internal static bool Fits(Rule rule, MonitorInfo monitor)
+    {
+        var t = ComputeTarget(rule, monitor, default);
+        return t.Width <= monitor.Bounds.Width && t.Height <= monitor.Bounds.Height && Inside(t, monitor.Bounds);
+    }
 
     static bool Inside(RectPx r, RectPx bounds)
     {

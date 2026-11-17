@@ -63,17 +63,20 @@ function Install-WinPla {
             New-Item -ItemType Directory -Path (Split-Path $dest) -Force | Out-Null
             Copy-Item $f.FullName $dest
         }
-        if (Test-Path $app) { Move-Item $app $old }
+        if (Test-Path $app) {
+            try { Move-Item $app $old }
+            catch { throw "Couldn't replace $app because it is in use. Close WinPla and run this command again. Nothing was changed." }
+        }
         try { Move-Item $new $app }
         catch { if (Test-Path $old) { Move-Item $old $app }; throw }
         Remove-Item $old -Recurse -Force -ErrorAction SilentlyContinue
 
         # 5) Start menu shortcut, no console
-        $lnkArgs = '--headless "{0}" -NoProfile -STA -File "{1}\WinPla.ps1"' -f $pwsh, $app
+        $lnkArgs = '--headless "{0}" -NoProfile -ExecutionPolicy Bypass -STA -File "{1}\WinPla.ps1"' -f $pwsh, $app
         $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Programs')) 'WinPla.lnk'))
         $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\conhost.exe'
         $lnk.Arguments = $lnkArgs
-        $lnk.WorkingDirectory = $app
+        $lnk.WorkingDirectory = $base   # not $app: a running WinPla would keep app\ in use and block the next update
         $lnk.Save()
         Write-Host 'Shortcut created: Start menu > WinPla'
 

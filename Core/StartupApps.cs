@@ -96,11 +96,15 @@ public static class StartupApps
         if (!path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) return null;
         var name = Path.GetFileName(path);
         if (name == "") return null;
+        // host programs: the real program is somewhere in the arguments and can't be resolved reliably
+        if (new[] { "rundll32.exe", "cmd.exe", "wscript.exe", "cscript.exe", "conhost.exe" }.Contains(name, StringComparer.OrdinalIgnoreCase))
+            return null;
 
         if (name.Equals("Update.exe", StringComparison.OrdinalIgnoreCase))
         {
-            var sq = Regex.Match(rest, @"--processStart(?:AndWait)?(?:=|\s+)""?([^""\s]+\.exe)""?", RegexOptions.IgnoreCase);
-            if (sq.Success) return (Path.GetFileName(sq.Groups[1].Value), path);
+            // quoted ("My App.exe", may contain spaces) or bare (Discord.exe); exactly one of the two groups matches
+            var sq = Regex.Match(rest, @"--processStart(?:AndWait)?(?:=|\s+)(?:""([^""]+\.exe)""|([^""\s]+\.exe))", RegexOptions.IgnoreCase);
+            if (sq.Success) return (Path.GetFileName(sq.Groups[1].Value + sq.Groups[2].Value), path);
         }
         return (name, path);
     }

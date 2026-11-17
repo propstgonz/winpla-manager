@@ -162,13 +162,17 @@ public class MainWindow : Window
         RefreshAll();
     }
 
+    bool _revertingAutostart;   // reverting IsChecked raises Checked/Unchecked again: it must not retry (or recurse)
+
     void Autostart_Click(object sender, RoutedEventArgs e)
     {
+        if (_revertingAutostart) return;
         bool on = AutostartBox.IsChecked == true;
         try { if (Autostart.IsEnabled != on) Autostart.Set(on); }
         catch (Exception ex)
         {
-            AutostartBox.IsChecked = !on;
+            _revertingAutostart = true;
+            try { AutostartBox.IsChecked = !on; } finally { _revertingAutostart = false; }
             Warn("Couldn't change the Start with Windows setting.", ex);
         }
     }
@@ -187,7 +191,8 @@ public class MainWindow : Window
         ResultText.Text = "Applying…";
         try
         {
-            var results = await Task.Run(() => Engine.ApplyOnce(_config));
+            var snapshot = new Config { Rules = [.. _config.Rules] };   // the UI may change the list while it runs
+            var results = await Task.Run(() => Engine.ApplyOnce(snapshot));
             var sb = new StringBuilder();
             foreach (var r in results)
             {

@@ -19,8 +19,8 @@ public static class Engine
     {
         Log.Write($"Watch started ({config.WatchSeconds} s, {config.Rules.Count} rules)");
         var track = new Dictionary<nint, Track>();
-        var end = DateTime.UtcNow.AddSeconds(config.WatchSeconds);
-        while (!ct.IsCancellationRequested && DateTime.UtcNow < end)
+        var clock = System.Diagnostics.Stopwatch.StartNew();   // immune to clock changes (time sync at sign-in)
+        while (!ct.IsCancellationRequested && clock.Elapsed.TotalSeconds < config.WatchSeconds)
         {
             try { Pass(config, track); }
             catch (Exception ex) { Log.Write("Error in watch cycle: " + ex); }
@@ -32,7 +32,15 @@ public static class Engine
     }
 
     // track == null: single pass. With track: per-HWND state (a window stops being watched once it settles or runs out of attempts).
+    // Runs on thread-pool threads (after await, Task.Run): switches the thread to PerMonitorV2 and restores it.
     static List<PlaceResult> Pass(Config config, Dictionary<nint, Track>? track)
+    {
+        var oldDpi = NativeMethods.SetThreadDpiAwarenessContext(NativeMethods.PER_MONITOR_AWARE_V2);
+        try { return PassPhysical(config, track); }
+        finally { NativeMethods.SetThreadDpiAwarenessContext(oldDpi); }
+    }
+
+    static List<PlaceResult> PassPhysical(Config config, Dictionary<nint, Track>? track)
     {
         var monitors = Monitors.GetAll();
         var windows = AppWindows.GetAll();
@@ -50,13 +58,17 @@ public static class Engine
                     if (!track.TryGetValue(w.Handle, out t)) track[w.Handle] = t = new Track();
                     if (t.Done) continue;
                 }
-                var status = mon is null ? PlaceStatus.MonitorDisconnected : Placer.Apply(w, rule, mon);
+                // A hung window would block SetWindowPlacement; it is reported as Failed but retried on the next pass.
+                bool hung = mon is not null && NativeMethods.IsHungAppWindow(w.Handle);
+                var status = mon is null ? PlaceStatus.MonitorDisconnected : hung ? PlaceStatus.Failed : Placer.Apply(w, rule, mon);
                 results.Add(new PlaceResult(rule, w, status));
                 if (t is null) continue;
+                if (status != PlaceStatus.AlreadyOk && t.Logged.Add(status))
+                    Log.Write($"{status}{(hung ? " (not responding)" : "")}: {w.ExeName} \"{w.Title}\" (hwnd {w.Handle:X}) -> {mon?.Label ?? rule.MonitorLabel}");
+                // Neither counts as an attempt: a monitor that wakes up late or a window that responds again still gets placed.
+                if (mon is null || hung) continue;
                 t.Attempts++;
                 t.Settled = status == PlaceStatus.AlreadyOk ? t.Settled + 1 : 0;
-                if (status != PlaceStatus.AlreadyOk && t.Logged.Add(status))
-                    Log.Write($"{status}: {w.ExeName} \"{w.Title}\" (hwnd {w.Handle:X}) -> {mon?.Label ?? rule.MonitorLabel}");
             }
         }
         return results;

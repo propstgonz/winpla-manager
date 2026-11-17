@@ -197,6 +197,13 @@ public class RuleDialog : Window
             { Info("X, Y, Width and Height must be whole numbers."); return; }
             if (w <= 0 || h <= 0) { Info("Width and Height must be greater than 0."); return; }
             (rule.X, rule.Y, rule.Width, rule.Height) = (x, y, w, h);
+            // a disconnected monitor (Info == null) can't be checked: the values are kept as they are
+            if (mon.Info is { } m && !Placer.Fits(rule, m))
+            {
+                Info($"The window must fit on {m.Label}: Width and Height can't be larger than {m.Bounds.Width}×{m.Bounds.Height}, " +
+                     "and X and Y must keep the centre of the window on that monitor.");
+                return;
+            }
         }
         Result = rule;
         DialogResult = true;

@@ -94,7 +94,13 @@ internal static class NativeMethods
     [DllImport("user32.dll")] public static extern bool GetWindowRect(nint hwnd, out RECT rect);
     [DllImport("user32.dll")] public static extern bool GetWindowPlacement(nint hwnd, ref WINDOWPLACEMENT wp);
     [DllImport("user32.dll", SetLastError = true)] public static extern bool SetWindowPlacement(nint hwnd, ref WINDOWPLACEMENT wp);
-    [DllImport("user32.dll")] public static extern bool SystemParametersInfo(uint action, uint param, out RECT rect, uint flags);
+    [DllImport("user32.dll")] public static extern nint MonitorFromRect(ref RECT rect, uint flags);
+    [DllImport("user32.dll")] public static extern bool IsHungAppWindow(nint hwnd);
+
+    // pwsh's manifest already makes the process System-aware, so SetProcessDpiAwarenessContext fails there:
+    // the threads that read monitor/window geometry switch to PerMonitorV2 and restore the previous context.
+    public const nint PER_MONITOR_AWARE_V2 = -4;
+    [DllImport("user32.dll")] public static extern nint SetThreadDpiAwarenessContext(nint context);
 
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(nint hwnd, int attr, out int value, int size);
 

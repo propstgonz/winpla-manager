@@ -261,8 +261,9 @@ The same sources build into `WinPla.exe` with `dotnet` and run under PowerShell 
 - **Monitors are identified by a stable device ID** (the device interface path from `EnumDisplayDevices`).
   The number (`\\.\DISPLAYn`) and the name are only for display. The name is the friendly name Windows
   reports for the monitor, with a fallback to the model code taken from the device ID.
-- **Physical pixels everywhere.** The process is PerMonitorV2: through the manifest for the `.exe`, and through
-  `SetProcessDpiAwarenessContext` under `pwsh`, which has no manifest of its own.
+- **Physical pixels everywhere.** The process is PerMonitorV2 through the manifest for the `.exe`. Under `pwsh`,
+  whose manifest already makes the process System-aware, the code that reads monitor and window geometry switches
+  its thread to PerMonitorV2 (`SetThreadDpiAwarenessContext`) and restores it afterwards.
 - **Placement uses the restored rectangle** (`WINDOWPLACEMENT.rcNormalPosition`, converted from workspace
   coordinates). To maximize, the window is first restored at the target and then maximized, because
   maximizing directly doesn't move a window that is already maximized on another monitor. Minimized windows
