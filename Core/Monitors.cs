@@ -9,6 +9,7 @@ public static class Monitors
     public static IReadOnlyList<MonitorInfo> GetAll()
     {
         var list = new List<MonitorInfo>();
+        var friendly = FriendlyNames();
         EnumDisplayMonitors(0, 0, (nint h, nint _, ref RECT _, nint _) =>
         {
             var mi = new MONITORINFOEX { cbSize = Marshal.SizeOf<MONITORINFOEX>() };
@@ -19,7 +20,8 @@ public static class Monitors
 
             string id = string.IsNullOrEmpty(dd.DeviceID) ? mi.szDevice : dd.DeviceID;
             // DeviceID tipo \\?\DISPLAY#GSM5B09#5&...; el 2º trozo es el código de modelo
-            string name = dd.DeviceString;
+            // Preferimos el nombre comercial que muestra Configuración ("LG ULTRAGEAR")
+            if (!friendly.TryGetValue(id, out string? name)) name = dd.DeviceString;
             if (string.IsNullOrWhiteSpace(name) || name.Contains("Generic PnP", StringComparison.OrdinalIgnoreCase))
             {
                 var parts = id.Split('#');
@@ -32,6 +34,31 @@ public static class Monitors
             return true;
         }, 0);
         return list.OrderBy(m => m.Number).ToList();
+    }
+
+    /// <summary>Ruta de interfaz del monitor (= MonitorInfo.Id) → nombre comercial (EDID). Vacío si algo falla.</summary>
+    static Dictionary<string, string> FriendlyNames()
+    {
+        var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            if (GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, out uint np, out uint nm) != 0) return names;
+            var paths = new DISPLAYCONFIG_PATH_INFO[np];
+            var modes = new DISPLAYCONFIG_MODE_INFO[nm];
+            if (QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, ref np, paths, ref nm, modes, 0) != 0) return names;
+            for (int i = 0; i < np; i++)
+            {
+                var t = new DISPLAYCONFIG_TARGET_DEVICE_NAME();
+                t.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+                t.header.size = Marshal.SizeOf<DISPLAYCONFIG_TARGET_DEVICE_NAME>();
+                t.header.adapterId = paths[i].targetAdapterId;
+                t.header.id = paths[i].targetId;
+                if (DisplayConfigGetDeviceInfo(ref t) == 0 && !string.IsNullOrWhiteSpace(t.monitorFriendlyDeviceName) && !string.IsNullOrEmpty(t.monitorDevicePath))
+                    names[t.monitorDevicePath] = t.monitorFriendlyDeviceName.Trim();
+            }
+        }
+        catch { }   // nombre comercial opcional: si falla, se usa el de siempre
+        return names;
     }
 
     internal static RectPx ToRect(RECT r) => new(r.Left, r.Top, r.Right - r.Left, r.Bottom - r.Top);

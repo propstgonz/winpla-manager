@@ -36,6 +36,37 @@ internal static class NativeMethods
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
     }
 
+    // QueryDisplayConfig: solo los campos que se leen; Size fija el tamaño real de cada struct.
+    [StructLayout(LayoutKind.Sequential)] public struct LUID { public uint LowPart; public int HighPart; }
+
+    [StructLayout(LayoutKind.Sequential, Size = 72)]
+    public struct DISPLAYCONFIG_PATH_INFO
+    {
+        public LUID sourceAdapterId;
+        public uint sourceId, sourceModeInfoIdx, sourceStatusFlags;
+        public LUID targetAdapterId;
+        public uint targetId;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Size = 64)] public struct DISPLAYCONFIG_MODE_INFO { public uint infoType; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DISPLAYCONFIG_DEVICE_INFO_HEADER { public int type, size; public LUID adapterId; public uint id; }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct DISPLAYCONFIG_TARGET_DEVICE_NAME   // 420 bytes
+    {
+        public DISPLAYCONFIG_DEVICE_INFO_HEADER header;
+        public uint flags, outputTechnology;
+        public ushort edidManufactureId, edidProductCodeId;
+        public uint connectorInstance;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)] public string monitorFriendlyDeviceName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string monitorDevicePath;
+    }
+
+    public const uint QDC_ONLY_ACTIVE_PATHS = 2;
+    public const int DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2;
+
     public delegate bool MonitorEnumProc(nint hMonitor, nint hdc, ref RECT rect, nint data);
     public delegate bool EnumWindowsProc(nint hwnd, nint data);
 
@@ -46,6 +77,10 @@ internal static class NativeMethods
     [DllImport("user32.dll")] public static extern bool EnumDisplayMonitors(nint hdc, nint clip, MonitorEnumProc proc, nint data);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern bool GetMonitorInfo(nint hMonitor, ref MONITORINFOEX info);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern bool EnumDisplayDevices(string? device, uint index, ref DISPLAY_DEVICE dd, uint flags);
+
+    [DllImport("user32.dll")] public static extern int GetDisplayConfigBufferSizes(uint flags, out uint numPaths, out uint numModes);
+    [DllImport("user32.dll")] public static extern int QueryDisplayConfig(uint flags, ref uint numPaths, [Out] DISPLAYCONFIG_PATH_INFO[] paths, ref uint numModes, [Out] DISPLAYCONFIG_MODE_INFO[] modes, nint topologyId);
+    [DllImport("user32.dll")] public static extern int DisplayConfigGetDeviceInfo(ref DISPLAYCONFIG_TARGET_DEVICE_NAME info);
 
     [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc proc, nint data);
     [DllImport("user32.dll")] public static extern bool IsWindow(nint hwnd);
